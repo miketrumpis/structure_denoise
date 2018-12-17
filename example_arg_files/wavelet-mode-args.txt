@@ -1,0 +1,12 @@
+# This argument turns on wavelet mode
+--plot-wavelet-mode
+
+# Use this wavelet name (from PyWavelets)
+--wavelet-name=db2
+
+# Data block length
+--wavelet-length=2000
+
+# Sampling frequency
+--wavelet-samp-rate=1000
+

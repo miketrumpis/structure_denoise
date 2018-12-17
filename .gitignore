@@ -1,0 +1,6 @@
+*.pyc
+*~
+.DS_Store
+.ipynb_checkpoints
+__pycache__
+diagnostic_plots

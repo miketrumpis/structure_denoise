@@ -1,0 +1,12 @@
+# path to the base of the dataset
+--data-source=/Users/mike/experiment_data/180222_goose/002
+
+# "type" of source (currently pesaran or open ephys)
+--source-type=pesaran
+
+# a list of channels to be dropped from analysis (due to recording snafu)
+--exclude-channels 66 71 195
+
+# if denoising the dataset, then an output file will be created with this modifier (default "clean")
+--save-mod=multires-clean
+

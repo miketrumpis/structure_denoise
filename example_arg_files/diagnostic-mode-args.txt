@@ -1,0 +1,12 @@
+--diagnostic-mode
+
+# Show plots for a single wavelet level (enter a number), or all levels
+--diagnostic-wavelet-level=all
+
+# If present, skip writing videos
+# --diagnostic-skip-video
+
+# this mode also needs a data source and processing parameters
+@data-source-args.txt
+@proc-args.txt
+

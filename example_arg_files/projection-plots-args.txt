@@ -1,0 +1,18 @@
+# Turn on projection mode
+--plot-projection-mode
+
+# Look at this wavelet level (wavelet specified in processing args, or defaulted)
+--projection-wave-level=4
+
+# Compare projections at length scales +/- 0.5 mm
+--projection-deviation=0.5
+
+# Demo with a block starting at this time in seconds (otherwise use a random block)
+--projection-frame-start=30
+
+# link in data
+@data-source-args.txt
+
+# link in processing specs
+@proc-args.txt
+

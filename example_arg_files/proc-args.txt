@@ -1,0 +1,23 @@
+# --- Batch arguments ---
+
+# If this argument is present, operate on wavelet subbands...
+--multiresolution
+
+# ...with this wavelet
+--wavelet-name=db2
+
+# This is the size of the short time batch in seconds
+--block-size=0.5
+
+# --- Method arguments ---
+
+# Use a minimum of 3 dimensions for the noise projection
+--min-resid-rank=3
+
+# Bias the length scale estimates by -1 mm
+--length-scale-bias=-1
+
+# Other parameters:
+#--model-var=0.95
+#--resid-var=0.9
+#--max-image-rank=80
