@@ -4,6 +4,8 @@ This set of code performs artifact subtraction for the peculiar noise "structure
 
 ## Installing
 
+This code has been tested for Python 2 and Python 3.
+
 1. Set up a python installation -- I recommend [pyenv](https://github.com/pyenv/pyenv) in conjunction with [pyenv-virtual-env](https://github.com/pyenv/pyenv-virtualenv) on mac or linux:
 
 ```
