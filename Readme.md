@@ -2,6 +2,22 @@
 
 This set of code performs artifact subtraction for the peculiar noise "structure" seen in the 244 channel LCP ECoG array. The algorithm is described in a notebook named "Structure_denoise_notes". There is also an extensive library of methods to visualize and predict the effects of processing parameters, which can be used to tweak processing for a particular recording.
 
+## Installing
+
+1. Set up a python installation -- I recommend [pyenv](https://github.com/pyenv/pyenv) in conjunction with [pyenv-virtual-env](https://github.com/pyenv/pyenv-virtualenv) on mac or linux:
+
+```
+$ pyenv install [pythonversion, e.g. 2.7.14]
+$ pyenv virtualenv 2.7.14 denoise_py2
+$ pyenv activate denoise_py2
+```
+
+2. git-clone this repo: `git clone https://github.com/miketrumpis/structure_denoise.git`
+2. pip-install requirements: `pip install -r requirements.txt`
+2. pip-install this package: `pip install .`
+
+You may need to pip-install a graphics backend to enable plotting (e.g. `pip install pyqt5` on python 3)
+
 ## Command-line interface
 The driver script (`driver.py`) is an interface to the code base that can be run in multiple modes that steer usage. The full list of options is printed here. Due to the complexity of options, arguments pertaining to different run-modes can be written in individual files and then combined to perform the desired mode(s). For example, the driver script can be run with this syntax (*with the "@" symbol processing the file name*) to plug in options for the plot-wavelets-mode
 
