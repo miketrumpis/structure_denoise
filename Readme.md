@@ -6,7 +6,9 @@ This set of code performs artifact subtraction for the peculiar noise "structure
 
 This code has been tested for Python 2 and Python 3.
 
-1. Set up a python installation -- I recommend [pyenv](https://github.com/pyenv/pyenv) in conjunction with [pyenv-virtual-env](https://github.com/pyenv/pyenv-virtualenv) on mac or linux:
+1. Set up a python installation
+
+I recommend [pyenv](https://github.com/pyenv/pyenv) in conjunction with [pyenv-virtual-env](https://github.com/pyenv/pyenv-virtualenv) on mac or linux:
 
 ```
 $ pyenv install [pythonversion, e.g. 2.7.14]
@@ -14,11 +16,29 @@ $ pyenv virtualenv 2.7.14 denoise_py2
 $ pyenv activate denoise_py2
 ```
 
+For windows, there is a plain install, with system environment settings described
+[here](https://anthonydebarros.com/2018/06/21/setting-up-python-in-windows-10/)
+or ana-/mini-conda detailed
+[here](https://conda.io/docs/user-guide/install/windows.html). In the
+case of miniconda, a working environment can be install like this from
+the Anaconda Prompt application:
+
+```
+conda create -n denoise-env
+conda activate denoise-env
+conda install pip
+```
+
+Then proceed to these steps.
+
 2. git-clone this repo: `git clone https://github.com/miketrumpis/structure_denoise.git`
 2. pip-install requirements: `pip install -r requirements.txt`
 2. pip-install this package: `pip install .`
 
-You may need to pip-install a graphics backend to enable plotting (e.g. `pip install pyqt5` on python 3)
+You may need to pip-install a graphics backend to enable plotting
+(e.g. `pip install pyqt5` on python 3). **Note that the instructions
+here have installed software into virtual environments. These need to
+be re-activated any time the software will be used.**
 
 ## Command-line interface
 The driver script (`driver.py`) is an interface to the code base that can be run in multiple modes that steer usage. The full list of options is printed here. Due to the complexity of options, arguments pertaining to different run-modes can be written in individual files and then combined to perform the desired mode(s). For example, the driver script can be run with this syntax (*with the "@" symbol processing the file name*) to plug in options for the plot-wavelets-mode
