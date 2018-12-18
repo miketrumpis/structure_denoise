@@ -10,6 +10,7 @@ __all__ = ['DataSource', 'PesaranDataSource', 'OpenEphysHDFSource']
 
 
 def get_pesaran_metadata(recording):
+    """Scan the pesaran-style metadata struct for info"""
     rec_name = os.path.split(recording)[1]
     exp_struct = os.path.join(recording, 'rec{}.experiment.mat'.format(rec_name))
     exp = mat4py.loadmat(exp_struct)['experiment']
@@ -67,6 +68,19 @@ def get_pesaran_metadata(recording):
 
 
 class DataSource(object):
+    """Data source providing access from file-mapped LFP signals.
+
+    >>> batch = data_source[a:b]
+    This syntax returns an array timeseries in (channels, samps) shape, including only electrode array channels (but
+    excluding any channels rejected by, e.g., manual inspection).
+
+    >>> data_source[a:b] = filtered_batch
+    If the DataSource was constructed with "saving=True", then this writes array channels into a file that is
+    compatible with the geometry of the original source file.
+
+    >>> data_source.channel_map
+    This is a ChannelMap object, providing channel to electrode-site map information and methods.
+    """
 
     def __init__(self, array, channel_map, samp_rate, exclude_channels=[],
                  is_transpose=False, saving=False, save_mod='clean'):
@@ -97,12 +111,15 @@ class DataSource(object):
 
 
     def _output_channel_subset(self, array_block):
+        """Returns the subset of array channels defined by a channel mask"""
+        # The subset of data channels that are array channels is defined in particular data source types
         if self._channel_mask is None:
             return array_block
         return array_block[self._channel_mask]
 
 
     def _full_channel_set(self, array_block):
+        """Writes a subset of array channels into the full set of array channels"""
         if self._channel_mask is None:
             return array_block
         n_chan = len(self._channel_mask)
@@ -153,27 +170,36 @@ class DataSource(object):
                 yield self[sl]
 
 
-    def to_hdf5(self, which='cleaned'):
-        if which.lower() == 'cleaned':
-            array = self._write_array
-        else:
-            array = self.array
-        shape = array.shape
-        if self.is_transpose:
-            samps, chans = shape
-        else:
-            chans, samps = shape
+    def write_parameters(self, **params):
+        """Store processing parameters"""
+        # must be overloaded!
+        pass
 
-        output = os.path.splitext(self.output_file)[0] + '.h5'
-        hdf = h5py.File(output, 'w')
-        hdf.create_dataset('samp_rate', shape=(), data=self.samp_rate)
-        b_pickle = Bunch(channel_map=self.__full_channel_map)
-        
+
+    # Incomplete
+    # def to_hdf5(self, which='cleaned'):
+    #     if which.lower() == 'cleaned':
+    #         array = self._write_array
+    #     else:
+    #         array = self.array
+    #     shape = array.shape
+    #     if self.is_transpose:
+    #         samps, chans = shape
+    #     else:
+    #         chans, samps = shape
+    #
+    #     output = os.path.splitext(self.output_file)[0] + '.h5'
+    #     hdf = h5py.File(output, 'w')
+    #     hdf.create_dataset('samp_rate', shape=(), data=self.samp_rate)
+    #     b_pickle = Bunch(channel_map=self.__full_channel_map)
         
         
     
 class PesaranDataSource(DataSource):
-    """For "Pesaran Lab" style datasets."""
+    """For "Pesaran Lab" style datasets.
+
+    This source currently only uses the "LFP" file as a source.
+    """
 
     def __init__(self, recording_dir, use_lfp=True, downsamp=None, **kwargs):
         metadata = get_pesaran_metadata(recording_dir)
@@ -202,8 +228,15 @@ class PesaranDataSource(DataSource):
         self._write_array = np.memmap(self.output_file, dtype=mm_dtype, shape=mm_shape, mode='w+')
 
 
+    def write_parameters(self, **params):
+        from json import dump
+        params_file = os.path.splitext(self.output_file)[0] + '.params.txt'
+        with open(params_file, 'w') as fp:
+            dump(params, fp, indent=2, separators=(',', ': '))
+
+
 class OpenEphysHDFSource(DataSource):
-    """For data packed in HDF5 format."""
+    """For data packed in HDF5 format from ecogdata/ecogana packages."""
 
     def __init__(self, hdf_file, electrode_name='psv_244_intan', **kwargs):
         h5 = h5py.File(hdf_file, 'r')
@@ -239,5 +272,15 @@ class OpenEphysHDFSource(DataSource):
         data_channels = np.zeros((n_data_chan, full_channels.shape[1]))
         data_channels[self._array_channels] = full_channels
         return data_channels
+
+
+    def write_parameters(self, **params):
+        # assume output file is open for business
+        h5_file = self._write_array.file
+        g = h5_file.create_group('structure_denoise_parameters')
+        for k, v in params.items():
+            g.create_dataset(k, data=v, shape=())
+
+
 
         

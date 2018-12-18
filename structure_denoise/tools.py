@@ -19,6 +19,8 @@ def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', 
     """
     
     chan_map = data_source.channel_map
+    data_source.write_parameters(block_size=block_size, multiresolution=multiresolution, wavelet=wavelet,
+                                 wave_levels=wave_levels, **cleaner_kwargs)
     for block, sl in tqdm(data_source.iter_blocks(block_size, return_slice=True)):
         if multiresolution:
             b_coefs = wavedec(block, wavelet, axis=1, level=wave_levels)

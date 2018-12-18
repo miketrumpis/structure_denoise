@@ -82,7 +82,7 @@ def get_data_source(parsed_args, **kwargs):
     save_mod = parsed_args.save_mod
     if dtype.lower() == 'pesaran':
         return PesaranDataSource(path, exclude_channels=excluded, save_mod=save_mod, **kwargs)
-    elif dtype.lower() == 'open ephys':
+    elif dtype.lower() == 'open-ephys':
         return OpenEphysHDFSource(path, exclude_channels=excluded, save_mod=save_mod, **kwargs)
 
     raise DataSourceError('Unknown data source type {}'.format(dtype))
