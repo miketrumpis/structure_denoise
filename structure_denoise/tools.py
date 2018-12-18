@@ -66,6 +66,7 @@ def all_wavelets_diagnostics(data_source, block_size=0.5, wavelet='db2', **kwarg
         coefs.append(cf)
     if kwargs.get('video', True):
         cleaned = waverec(coefs, wavelet, axis=1)
+        start = kwargs['block'] * L
         raw = data_source[start:start + L]
         video_file = os.path.join(save_dir, 'error_image_frames_fullband.mp4')
         make_video(raw, cleaned, data_source.channel_map, video_file)    
