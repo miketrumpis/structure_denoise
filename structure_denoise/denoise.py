@@ -458,7 +458,7 @@ def clean_frames_quickest(frames,
     that represents structured noise. The procedure is
 
     1) Determine the approximate length scale of the field based on a variogram
-    2) Find the field model order for a local regression that maximizes the field-to-noise variance ratio
+    2) Determine the rank of a model image-space projection to preserve model_var variance
     3) Obtain the error image for the correct model order
     4) Project the error onto the subspace that preserves 'resid_var' proportion of variance
     5) Return the raw frames minus the projected error frames
@@ -497,20 +497,13 @@ def clean_frames_quickest(frames,
     xb = xb[xb < 0.7 * xb.max()]
     y_half = 0.5 * np.percentile(yb, [10, 90]).sum()
     x_half = xb[np.where(yb > y_half)[0][0]]
-    param = dict(theta=-x_half / np.log(0.5))
+    param = dict(theta=-x_half / np.log(0.5) + length_scale_bias)
     param['x_half'] = x_half
     param['y_half'] = y_half
     param['xb'] = xb
     param['yb'] = yb
-    # print(param)
-    # xcorrs, r_vars, i_vars = image_error_variance(frames, param, chan_map, **model_kwargs)
-    # snr = i_vars / r_vars
-    # snr = r_vars / xcorrs
-    # snr = i_vars * r_vars / xcorrs
-    # The approximate filters do not change smoothly with order, but jump.
-    # So find the first order where SNR is equal to the maximum minus a 1% tolerance
-    # snr_max = np.max(snr)
-    # order = np.where(snr > snr_max * 0.99)[0][0]
+
+    # Build model covariance eigenvals / vecs
     lam, V = covar_model(param, chan_map)
     pct_var = np.cumsum(lam[::-1]) / np.sum(lam)
     order = np.where(pct_var > model_var)[0][0]
@@ -521,11 +514,6 @@ def clean_frames_quickest(frames,
     smooth_frames = np.dot(Vr, np.dot(Vr.T, frames))
     resid_full = frames - smooth_frames
     
-    ## # print('model order:', order)
-    ## clean_kwargs = model_kwargs.copy()
-    ## clean_kwargs.pop('max_order', None)
-    ## param = dict(theta = 4)
-    ## resid_full = error_image(frames, param, len(chan_map) - 1, chan_map, **clean_kwargs)
     if use_local_regression:
         if return_diagnostics:
             return smooth_frames, param
@@ -535,8 +523,6 @@ def clean_frames_quickest(frames,
     pct_var = np.cumsum(lam[::-1]) / np.sum(lam)
     resid_order = np.where(pct_var > resid_var)[0][0]
     resid_order = max(min_resid_rank, resid_order)
-    # print('resid order:', resid_order)
-    # print('model order:', order, 'resid order:', resid_order)
     Vr = V[:, -resid_order:]
     resid_refined = np.dot(Vr, np.dot(Vr.T, resid_full))
     param['resid_basis'] = Vr
