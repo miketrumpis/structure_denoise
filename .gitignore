@@ -1,6 +1,14 @@
-*.pyc
+# OS and emacs stuff
 *~
 .DS_Store
+
+# Py stuff
+*.pyc
 .ipynb_checkpoints
 __pycache__
+
+# runtime stuff
 diagnostic_plots
+
+# PyCharm stuff
+.idea
