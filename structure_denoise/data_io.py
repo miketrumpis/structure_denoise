@@ -154,6 +154,9 @@ class DataSource(object):
     def iter_blocks(self, block_length, return_slice=True):
         """Yield data blocks with given length (in seconds)"""
         L = int(block_length * self.samp_rate)
+        # Blocks need to be even length
+        if L % 2:
+            L += 1
         T = self.series_length
         N = T // L
         if L * N < T:
@@ -163,6 +166,9 @@ class DataSource(object):
             if start >= T:
                 raise StopIteration
             end = min(T, (i + 1) * L)
+            # if the tail block is odd-length, clip off the last point
+            if (end - start) % 1:
+                end -= 1
             sl = slice(start, end)
             if return_slice:
                 yield self[sl], sl
