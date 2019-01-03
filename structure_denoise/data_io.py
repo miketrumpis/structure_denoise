@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 import numpy as np
-import mat4py
+import scipy.io as sio
 import h5py
 from .channel_map import ChannelMap, Bunch, get_electrode_map
 
@@ -13,7 +13,7 @@ def get_pesaran_metadata(recording):
     """Scan the pesaran-style metadata struct for info"""
     rec_name = os.path.split(recording)[1]
     exp_struct = os.path.join(recording, 'rec{}.experiment.mat'.format(rec_name))
-    exp = mat4py.loadmat(exp_struct)['experiment']
+    exp = sio.loadmat(exp_struct, chars_as_strings=True)['experiment'][0, 0]
     md = Bunch()
 
     # Raw acquisition binary brick or hdf5 file
@@ -31,22 +31,26 @@ def get_pesaran_metadata(recording):
         md.raw_type = 'none'
 
     # Base name and this particular name
-    md.name_base = exp['hardware']['microdrive']['name_base']
-    md.rec_name = exp['hardware']['microdrive']['name']
+    md.name_base = exp['hardware'][0, 0]['microdrive'][0, 0]['name_base'][0]
+    md.rec_name = exp['hardware'][0, 0]['microdrive'][0, 0]['name'][0]
         
     # Sampling rate
-    md.fs = exp['hardware']['acquisition']['samplingrate']
+    md.fs = exp['hardware'][0, 0]['acquisition'][0, 0]['samplingrate'][0, 0]
 
     # Binary type (This appears to be wrong?)
     # dtype = exp['hardware']['acquisition']['data_format']
     md.dtype = np.dtype('h')
 
     # Electrode channels in the brick stream
-    md.stream_channels = np.array(exp['hardware']['microdrive']['electrodes']['channelid']) - 1
+    md.stream_channels = exp['hardware'][0, 0]['microdrive'][0, 0]['electrodes'][0, :]['channelid'].astype('i') - 1
 
     # Build the channel map from the electrode matrix positions
-    positions = exp['hardware']['microdrive']['electrodes']['position']
-    coordinates = [(p['row'], p['col']) for p in positions]
+    positions = exp['hardware'][0, 0]['microdrive'][0, 0]['electrodes'][0, :]['position']
+    coordinates = []
+    for p in positions:
+        row = p['row'].astype('i')[0, 0]
+        col = p['col'].astype('i')[0, 0]
+        coordinates.append((row, col))
     md.cm = ChannelMap.from_index(coordinates, (16, 16), col_major=False, pitch=0.75)
 
     # Determine number of samples in the stream to find raw stream shape

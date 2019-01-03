@@ -4,5 +4,4 @@ numpy==1.15.4
 matplotlib==2.2.3
 scipy==1.1.0
 h5py==2.8.0
-mat4py==0.4.2
 jupyter==1.0.0
