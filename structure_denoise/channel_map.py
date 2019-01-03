@@ -230,9 +230,10 @@ class ChannelMap(list):
             super(ChannelMap, self).__getslice__(i,j),
             self.geometry, col_major=self.col_major, pitch=self.pitch
             )
-        import sys
         # Keep the pre-computed combinations IFF the entire map is copied
-        if i==0 and j==sys.maxint and self._combs is not None:
+        i = index.start if index.start else 0
+        j = index.stop if index.stop else len(self)
+        if i == 0 and j == len(self) and self._combs is not None:
             new_map._combs = self._combs.copy()
         return new_map
 
