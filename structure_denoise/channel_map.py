@@ -41,11 +41,10 @@ class Bunch(dict):
         mx_c1 = max([len(s) for s in k_rep])
         mx_c2 = max([len(s) for s in v_rep])
         
-        table = [ '{0:<{col1}} : {1:<{col2}}\n'.format(
-            k, v, col1=mx_c1, col2=mx_c2
-            ) for (k, v) in zip(k_rep, v_rep) ]
+        table = ['{0:<{col1}} : {1:<{col2}}'.format(k, v, col1=mx_c1, col2=mx_c2)
+                 for (k, v) in zip(k_rep, v_rep)]
         
-        table = reduce(lambda x,y: x+y, table)
+        table = '\n'.join(table)
         return table.strip()
 
     def __copy__(self):
