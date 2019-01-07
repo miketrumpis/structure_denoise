@@ -42,6 +42,7 @@ parser.add_argument('--wavelet-name', type=str, default='db2', help='PyWavelets 
 parser.add_argument('--wavelet-levels', type=int, default=None,
                     help='Number of decomposition levels (otherwise auto determined)')
 parser.add_argument('--block-size', type=float, default=0.5, help='Processing block size in seconds')
+parser.add_argument('--skip-lowpass', action='store_true', help='Skip denoising smoothest wavelet scale')
 
 # Image projection spec
 parser.add_argument('--model-var', type=float, default=0.9, help='Model covariance proportion')
@@ -49,6 +50,9 @@ parser.add_argument('--resid-var', type=float, default=0.9, help='Noise covarian
 parser.add_argument('--length-scale-bias', type=float, default=0, help='Bias length scale estimates')
 parser.add_argument('--min-resid-rank', type=int, default=1, help='Minimum dimension of noise space')
 parser.add_argument('--max-image-rank', type=int, default=None, help='Maximum dimension of image space')
+parser.add_argument('--compress-range', action='store_true', help='Compress RMS range of channels before '
+                                                                  'decompositions (avoids attributing variance to '
+                                                                  'outlying channels)')
 
 # Basic usage: actually runs the method!
 parser.add_argument('--process-mode', action='store_true', help='Do batch artifact subtraction and save results')
@@ -94,11 +98,13 @@ def get_cleaning_args(parsed_args):
     kwargs['wavelet'] = parsed_args.wavelet_name
     kwargs['wave_levels'] = parsed_args.wavelet_levels
     kwargs['block_size'] = parsed_args.block_size
+    kwargs['skip_lowpass'] = parsed_args.skip_lowpass
     kwargs['model_var'] = parsed_args.model_var
     kwargs['resid_var'] = parsed_args.resid_var
     kwargs['max_image_rank'] = parsed_args.max_image_rank
     kwargs['min_resid_rank'] = parsed_args.min_resid_rank
     kwargs['length_scale_bias'] = parsed_args.length_scale_bias
+    kwargs['compress_range'] = parsed_args.compress_range
     return kwargs
 
 
@@ -134,7 +140,8 @@ def plot_projection_mode(parsed_args):
                      bias=parsed_args.length_scale_bias,
                      multiresolution=parsed_args.multiresolution,
                      wavelet=parsed_args.wavelet_name,
-                     wave_level=parsed_args.projection_wave_level)
+                     wave_level=parsed_args.projection_wave_level,
+                     compress_range=parsed_args.compress_range)
     pp.show()    
 
 
@@ -144,6 +151,8 @@ def diagnostic_mode(parsed_args):
     multiresolution = kwargs.pop('multiresolution')
     # wave levels not used here
     kwargs.pop('wave_levels')
+    # skip-lowpass not used here
+    kwargs.pop('skip_lowpass')
     # wavelet = kwargs.pop('wavelet', None)
     video = not parsed_args.diagnostic_skip_video
     source = get_data_source(parsed_args, saving=False)
@@ -157,5 +166,5 @@ def diagnostic_mode(parsed_args):
         all_wavelets_diagnostics(source, video=video, **kwargs)
     else:
         diagnostics(source, multiresolution=multiresolution, wave_level=wave_level, video=video, **kwargs)
-    pp.show()    
-        
+    pp.show()
+

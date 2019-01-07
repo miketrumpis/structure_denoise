@@ -241,9 +241,9 @@ def make_process_figures(raw, clean, channel_map, params, **kwargs):
 
 
 def plot_projections(frames, channel_map, model_var=0.95, deviation=0.5, bias=0,
-                     multiresolution=False, wavelet='db2', wave_level=4,
+                     multiresolution=False, wavelet='db2', wave_level=4, compress_range=False,
                      projected=True, f_idx=None):
-    from .denoise import fast_semivariogram, covar_model, error_image
+    from .denoise import fast_semivariogram, covar_model, error_image, range_compression
     import matplotlib.pyplot as pp
     # 3x3 panels:
     # 1st row: raw, "correct" projection (# of eigenvectors), residual
@@ -251,9 +251,15 @@ def plot_projections(frames, channel_map, model_var=0.95, deviation=0.5, bias=0,
 
     if multiresolution:
         coefs = wavelet_bandpass(frames, wavelet, wave_level, return_coefs=True)
+        if compress_range:
+            cx_scale = range_compression(coefs[wave_level])
+            coefs[wave_level] *= cx_scale[:, None]
         xb, yb = fast_semivariogram(coefs[wave_level], channel_map.site_combinations, xbin=0.5, trimmed=True)
         frames = waverec(coefs, wavelet, axis=1)
     else:
+        if compress_range:
+            cx_scale = range_compression(frames)
+            frames *= cx_scale[:, None]
         xb, yb = fast_semivariogram(frames, channel_map.site_combinations, xbin=0.5, trimmed=True)
 
     yb = yb[xb < 0.7 * xb.max()]
