@@ -6,7 +6,7 @@ from .tools import plot_projections, all_wavelets_diagnostics, diagnostics, clea
 from .data_io import *
 
 
-__all__ = ['parser', 'plot_wavelets_mode', 'plot_projection_mode']
+__all__ = ['parser', 'plot_wavelet_mode', 'plot_projection_mode']
 
 
 class DataSourceError(Exception):
@@ -115,7 +115,7 @@ def plot_wavelet_mode(parsed_args):
     sequence_length = parsed_args.wavelet_length
     sampling_rate = parsed_args.wavelet_samp_rate
     levels = parsed_args.wavelet_levels
-    plot_bandpasses_for_n(wavename, sequence_length, Fs=sampling_rate)
+    plot_bandpasses_for_n(wavename, sequence_length, Fs=sampling_rate, levels=levels)
     pp.show()
 
 
@@ -147,10 +147,15 @@ def diagnostic_mode(parsed_args):
     # wavelet = kwargs.pop('wavelet', None)
     video = not parsed_args.diagnostic_skip_video
     source = get_data_source(parsed_args, saving=False)
-    if multiresolution and parsed_args.diagnostic_wavelet_level.lower() == 'all':
+    wave_level = parsed_args.diagnostic_wavelet_level
+    if isinstance(wave_level, str) and wave_level.lower() == 'all':
+        all_waves = True
+    else:
+        wave_level = int(wave_level)
+        all_waves = False
+    if multiresolution and all_waves:
         all_wavelets_diagnostics(source, video=video, **kwargs)
     else:
-        wave_level = int(parsed_args.diagnostic_wavelet_level)
         diagnostics(source, multiresolution=multiresolution, wave_level=wave_level, video=video, **kwargs)
     pp.show()    
         
