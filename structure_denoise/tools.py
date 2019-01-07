@@ -12,7 +12,8 @@ from .denoise import clean_frames, clean_frames_quick, clean_frames_quickest
 
 # ------- Headline method -------
 
-def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', wave_levels=None, **cleaner_kwargs):
+def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', wave_levels=None,
+                 skip_lowpass=True, **cleaner_kwargs):
     """
     Take blocks from a DataSource object and clean the frames by removing a subspace
     learned to represent the structured noise.
@@ -24,7 +25,10 @@ def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', 
     for block, sl in tqdm(data_source.iter_blocks(block_size, return_slice=True)):
         if multiresolution:
             b_coefs = wavedec(block, wavelet, axis=1, level=wave_levels)
-            clean_coefs = [clean_frames_quickest(c, chan_map, **cleaner_kwargs) for c in b_coefs]
+            start_coefs = int(skip_lowpass)
+            clean_coefs = [clean_frames_quickest(c, chan_map, **cleaner_kwargs) for c in b_coefs[start_coefs:]]
+            if skip_lowpass:
+                clean_coefs.insert(0, b_coefs[0])
             clean_block = waverec(clean_coefs, wavelet, axis=1)
         else:
             clean_block = clean_frames_quickest(block, chan_map, **cleaner_kwargs)
@@ -222,7 +226,9 @@ def make_process_figures(raw, clean, channel_map, params, **kwargs):
         Vn = params['resid_basis']
         # row_images = [Vn[:, -1], Vn[:, -2], Vn[:, -3]]
         row_images = Vn[:, ::-1].T
-        row_titles = ['Eigenvec 1', 'Eigenvec 2', 'Eigenvec 3']
+        row_titles = ['Eigenvec 1 ({})', 'Eigenvec 2 ({})', 'Eigenvec 3 ({})']
+        resid_order = Vn.shape[1]
+        row_titles = [t.format(resid_order) for t in row_titles]
         for n in range(3):
             if n >= len(row_images):
                 break

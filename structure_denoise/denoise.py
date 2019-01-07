@@ -1,6 +1,7 @@
 from __future__ import print_function
 import numpy as np
 from scipy.ndimage import convolve
+from scipy.special import expit
 from .channel_map import ChannelMap
 
 __all__ = ['clean_frames', 'error_image']
@@ -443,6 +444,42 @@ def clean_frames_quick(frames,
     return frames - resid_refined
 
 
+def range_compression(frames):
+    rms = frames.std(1)
+    q1, q2, q3 = np.percentile(rms, [25, 50, 75])
+    iqr = q3 - q1
+    # linear range analogous to 3-sigma
+    linear_range = (q1 - 1.5 * iqr, q3 + 1.5 * iqr)
+    # squeeze everything past this range with an expit function 1/(1+exp(-x))
+    # with x translated and scaled such that
+    # T(q3 + 2 * iqr) = 3x
+    # T(q1 - 2 * iqr) = -3x
+
+    cx_scale = np.ones_like(rms)
+    m_low = rms < q1 - 1.5 * iqr
+    # print('linear range:', linear_range)
+    # print('3-tau compression range:', 0.5 * iqr)
+    if m_low.any():
+        last_linear = q1 - 1.5 * iqr
+        # shift zero point
+        rms_low = rms[m_low] - last_linear
+        # scale to 3x ~ 0.5 * iqr (flip to positive)
+        rms_low *= -3 / (0.5 * iqr)
+        # (subtract positive expit values from last linear range value)
+        f_out = last_linear - (2 * expit(rms_low) - 1) * (0.5 * iqr)
+        cx_scale[m_low] = f_out / rms[m_low]
+    m_high = rms > q3 + 1.5 * iqr
+    if m_high.any():
+        # shift zero point
+        last_linear = q3 + 1.5 * iqr
+        rms_high = rms[m_high] - last_linear
+        rms_high *= 3 / (0.5 * iqr)
+        # output function saturates at q3 + 2 * iqr (1/2 IQR above last linear)
+        f_out = last_linear + (2 * expit(rms_high) - 1) * (0.5 * iqr)
+        cx_scale[m_high] = f_out / rms[m_high]
+    return cx_scale
+
+
 def clean_frames_quickest(frames,
                           chan_map,
                           xbin=0.5,
@@ -451,6 +488,7 @@ def clean_frames_quickest(frames,
                           min_resid_rank=1,
                           max_image_rank=None,
                           length_scale_bias=0,
+                          compress_range=False,
                           use_local_regression=False,
                           return_diagnostics=False):
     """
@@ -492,6 +530,10 @@ def clean_frames_quickest(frames,
     """
 
     # xb, yb = semivariogram(frames, chan_map.site_combinations, xbin=xbin)
+    if compress_range:
+        cx_scale = range_compression(frames)
+        frames = frames * cx_scale[:, None]
+
     xb, yb = fast_semivariogram(frames, chan_map.site_combinations, xbin=xbin, trimmed=True)
     yb = yb[xb < 0.7 * xb.max()]
     xb = xb[xb < 0.7 * xb.max()]
@@ -515,6 +557,8 @@ def clean_frames_quickest(frames,
     resid_full = frames - smooth_frames
     
     if use_local_regression:
+        if compress_range:
+            smooth_frames /= cx_scale[:, None]
         if return_diagnostics:
             return smooth_frames, param
         return smooth_frames
@@ -526,9 +570,12 @@ def clean_frames_quickest(frames,
     Vr = V[:, -resid_order:]
     resid_refined = np.dot(Vr, np.dot(Vr.T, resid_full))
     param['resid_basis'] = Vr
+    frames = frames - resid_refined
+    if compress_range:
+        frames /= cx_scale[:, None]
     if return_diagnostics:
-        return frames - resid_refined, param
-    return frames - resid_refined
+        return frames, param
+    return frames
 
 
 def covar_model(model, chan_map=None, frames=None, decompose=True):
