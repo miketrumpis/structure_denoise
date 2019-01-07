@@ -171,7 +171,7 @@ class DataSource(object):
                 raise StopIteration
             end = min(T, (i + 1) * L)
             # if the tail block is odd-length, clip off the last point
-            if (end - start) % 1:
+            if (end - start) % 2:
                 end -= 1
             sl = slice(start, end)
             if return_slice:
