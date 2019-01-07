@@ -209,9 +209,10 @@ def make_process_figures(raw, clean, channel_map, params, **kwargs):
     lowpass = np.dot(Vr, np.dot(Vr.T, raw[:, i]))
     resid = raw_frame - lowpass
     row_images = [raw_frame, lowpass, resid]
+    clim = np.percentile(raw_frame, [2, 98])
     row_titles = ['Raw', 'Lowpass {} modes'.format(params['model_order']), 'Resid']
     for n in range(3):
-        channel_map.image(row_images[n], ax=axs[1, n], cbar=False)
+        channel_map.image(row_images[n], ax=axs[1, n], cbar=False, clim=clim)
         axs[1, n].set_title(row_titles[n])
     
     
