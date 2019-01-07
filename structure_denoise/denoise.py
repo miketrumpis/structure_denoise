@@ -568,14 +568,15 @@ def clean_frames_quickest(frames,
     if sphere_resids:
         resid_norm = resid_full - resid_full.mean(1)[:, None]
         resid_norm = resid_norm / resid_norm.std(1)[:, None]
-        U, S, _ = np.linalg.svd(resid_norm, full_matrices=0)
-        # Cov(R) ~ RR^{T} = (USV^{T})(VSU^{T})
-        # don't worry about 1 / N scaling, since the pct_var is proportional to sum(lam)
-        lam = S[::-1] ** 2
-        V = U[:, ::-1]
+        resid_cov = np.cov(resid_full)
+        # U, S, _ = np.linalg.svd(resid_norm, full_matrices=0)
+        # # Cov(R) ~ RR^{T} = (USV^{T})(VSU^{T})
+        # # don't worry about 1 / N scaling, since the pct_var is proportional to sum(lam)
+        # lam = S[::-1] ** 2
+        # V = U[:, ::-1]
     else:
         resid_cov = np.cov(resid_full)
-        lam, V = np.linalg.eigh(resid_cov + 1e-4 * np.eye(len(frames)))
+    lam, V = np.linalg.eigh(resid_cov + 1e-4 * np.eye(len(frames)))
     pct_var = np.cumsum(lam[::-1]) / np.sum(lam)
     resid_order = np.where(pct_var > resid_var)[0][0]
     resid_order = max(min_resid_rank, resid_order)
