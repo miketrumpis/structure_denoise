@@ -13,7 +13,7 @@ from .denoise import clean_frames, clean_frames_quick, clean_frames_quickest
 # ------- Headline method -------
 
 def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', wave_levels=None,
-                 skip_lowpass=True, **cleaner_kwargs):
+                 skip_lowpass=False, **cleaner_kwargs):
     """
     Take blocks from a DataSource object and clean the frames by removing a subspace
     learned to represent the structured noise.
