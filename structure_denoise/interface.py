@@ -34,6 +34,7 @@ parser.add_argument('--data-source', type=str, default='none', help='Path to dat
 parser.add_argument('--source-type', type=str, default='none', help='pesaran, open ephys, ...')
 parser.add_argument('--exclude-channels', type=int, nargs='+', help='Drop these channels from the array')
 parser.add_argument('--save-mod', type=str, default='clean', help='Modifier name for cleaned file')
+parser.add_argument('--channel-map', type=str, default='', help='Name of channel map (for Intan-sources)')
 parser.add_argument('--reraise', action='store_true')
 
 # Block processing spec
@@ -80,6 +81,9 @@ def get_data_source(parsed_args, **kwargs):
     dtype = parsed_args.source_type
     path = parsed_args.data_source
     excluded = parsed_args.exclude_channels
+    cm = parsed_args.channel_map
+    if not cm:
+        cm = 'psv_244_intan'
     if not excluded:
         excluded = []
     print('excluded:', excluded)
@@ -87,7 +91,7 @@ def get_data_source(parsed_args, **kwargs):
     if dtype.lower() == 'pesaran':
         return PesaranDataSource(path, exclude_channels=excluded, save_mod=save_mod, **kwargs)
     elif dtype.lower() == 'open-ephys':
-        return OpenEphysHDFSource(path, exclude_channels=excluded, save_mod=save_mod, **kwargs)
+        return OpenEphysHDFSource(path, exclude_channels=excluded, save_mod=save_mod, electrode_name=cm, **kwargs)
 
     raise DataSourceError('Unknown data source type {}'.format(dtype))
 
