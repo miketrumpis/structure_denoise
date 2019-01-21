@@ -287,6 +287,29 @@ def ergodic_semivariogram(data, normed=False, mask_outliers=True, zero_field=Tru
     return 0.5 * (var[:,None] + var) - cxx
 
 
+def heuristic_length_scale(frames, chan_map, xbin, length_scale_bias, max_distance):
+    xb, yb = fast_semivariogram(frames, chan_map.site_combinations, xbin=xbin, trimmed=True)
+    yb = yb[xb < max_distance * xb.max()]
+    xb = xb[xb < max_distance * xb.max()]
+    if yb[0] > yb[1]:
+        yb = yb[1:]
+        xb = xb[1:]
+    y_half = 0.5 * np.percentile(yb, [10, 90]).sum()
+    over = np.where(yb > y_half)[0][0]
+    under = over - 1
+    # check for local monotonicity
+    while yb[under] > yb[over]:
+        under -= 1
+    y_gap = yb[over] - yb[under]
+    x_half = xb[under] * (yb[over] - y_half) / y_gap + xb[over] * (y_half - yb[under]) / y_gap
+    param = dict(theta=-x_half / np.log(0.5) + length_scale_bias)
+    param['x_half'] = x_half
+    param['y_half'] = y_half
+    param['xb'] = xb
+    param['yb'] = yb
+    return param
+
+
 def clean_frames(frames,
                  chan_map,
                  xbin=0.5,
@@ -489,6 +512,7 @@ def clean_frames_quickest(frames,
                           max_image_rank=None,
                           length_scale_bias=0,
                           compress_range=False,
+                          max_variogram_distance=0.7,
                           use_local_regression=False,
                           return_diagnostics=False):
     """
@@ -534,16 +558,7 @@ def clean_frames_quickest(frames,
         cx_scale = range_compression(frames)
         frames = frames * cx_scale[:, None]
 
-    xb, yb = fast_semivariogram(frames, chan_map.site_combinations, xbin=xbin, trimmed=True)
-    yb = yb[xb < 0.7 * xb.max()]
-    xb = xb[xb < 0.7 * xb.max()]
-    y_half = 0.5 * np.percentile(yb, [10, 90]).sum()
-    x_half = xb[np.where(yb > y_half)[0][0]]
-    param = dict(theta=-x_half / np.log(0.5) + length_scale_bias)
-    param['x_half'] = x_half
-    param['y_half'] = y_half
-    param['xb'] = xb
-    param['yb'] = yb
+    param = heuristic_length_scale(frames, chan_map, xbin, length_scale_bias, max_variogram_distance)
 
     # Build model covariance eigenvals / vecs
     lam, V = covar_model(param, chan_map)

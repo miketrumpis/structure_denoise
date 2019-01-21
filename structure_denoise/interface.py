@@ -49,6 +49,8 @@ parser.add_argument('--skip-lowpass', action='store_true', help='Skip denoising 
 parser.add_argument('--model-var', type=float, default=0.9, help='Model covariance proportion')
 parser.add_argument('--resid-var', type=float, default=0.9, help='Noise covariance proportion')
 parser.add_argument('--length-scale-bias', type=float, default=0, help='Bias length scale estimates')
+parser.add_argument('--max-variogram-distance', type=float, default=0.7, help='Consider variogram within this factor '
+                                                                              'of the maximum distance')
 parser.add_argument('--min-resid-rank', type=int, default=1, help='Minimum dimension of noise space')
 parser.add_argument('--max-image-rank', type=int, default=None, help='Maximum dimension of image space')
 parser.add_argument('--compress-range', action='store_true', help='Compress RMS range of channels before '
@@ -108,6 +110,7 @@ def get_cleaning_args(parsed_args):
     kwargs['max_image_rank'] = parsed_args.max_image_rank
     kwargs['min_resid_rank'] = parsed_args.min_resid_rank
     kwargs['length_scale_bias'] = parsed_args.length_scale_bias
+    kwargs['max_variogram_distance'] = parsed_args.max_variogram_distance
     kwargs['compress_range'] = parsed_args.compress_range
     return kwargs
 
