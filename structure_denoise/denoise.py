@@ -302,7 +302,11 @@ def heuristic_length_scale(frames, chan_map, xbin, length_scale_bias, max_distan
         under -= 1
     y_gap = yb[over] - yb[under]
     x_half = xb[under] * (yb[over] - y_half) / y_gap + xb[over] * (y_half - yb[under]) / y_gap
-    param = dict(theta=-x_half / np.log(0.5) + length_scale_bias)
+    theta = -x_half / np.log(0.5)
+    # do not bias estimate if theta is less than 25% larger than the proposed bias
+    if theta > 1.25 * length_scale_bias:
+        theta -= length_scale_bias
+    param = dict(theta=theta)
     param['x_half'] = x_half
     param['y_half'] = y_half
     param['xb'] = xb
