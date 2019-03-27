@@ -155,21 +155,21 @@ class DataSource(object):
             self._write_array[:, slicer] = full_data
 
 
-    def iter_blocks(self, block_length, return_slice=True):
-        """Yield data blocks with given length (in seconds)"""
-        L = int(block_length * self.samp_rate)
+    def iter_blocks(self, block_length, overlap=0, return_slice=True):
+        """Yield data blocks with given length (in samples)"""
+        L = block_length
         # Blocks need to be even length
         if L % 2:
             L += 1
         T = self.series_length
-        N = T // L
-        if L * N < T:
+        N = T // (L - overlap)
+        if (L - overlap) * N < T:
             N += 1
         for i in range(N):
-            start = i * L
+            start = i * (L - overlap)
             if start >= T:
                 raise StopIteration
-            end = min(T, (i + 1) * L)
+            end = min(T, start + L)
             # if the tail block is odd-length, clip off the last point
             if (end - start) % 2:
                 end -= 1

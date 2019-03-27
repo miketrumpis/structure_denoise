@@ -43,6 +43,7 @@ parser.add_argument('--wavelet-name', type=str, default='db2', help='PyWavelets 
 parser.add_argument('--wavelet-levels', type=int, default=None,
                     help='Number of decomposition levels (otherwise auto determined)')
 parser.add_argument('--block-size', type=float, default=0.5, help='Processing block size in seconds')
+parser.add_argument('--overlap', type=float, default=0, help='Block overlap (to smooth over edge effects in blocking)')
 parser.add_argument('--skip-lowpass', action='store_true', help='Skip denoising smoothest wavelet scale')
 
 # Image projection spec
@@ -104,6 +105,7 @@ def get_cleaning_args(parsed_args):
     kwargs['wavelet'] = parsed_args.wavelet_name
     kwargs['wave_levels'] = parsed_args.wavelet_levels
     kwargs['block_size'] = parsed_args.block_size
+    kwargs['block_overlap'] = parsed_args.overlap
     kwargs['skip_lowpass'] = parsed_args.skip_lowpass
     kwargs['model_var'] = parsed_args.model_var
     kwargs['resid_var'] = parsed_args.resid_var

@@ -12,7 +12,7 @@ from .denoise import clean_frames, clean_frames_quick, clean_frames_quickest
 
 # ------- Headline method -------
 
-def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', wave_levels=None,
+def clean_blocks(data_source, block_size, block_overlap=0, multiresolution=False, wavelet='db2', wave_levels=None,
                  skip_lowpass=False, **cleaner_kwargs):
     """
     Take blocks from a DataSource object and clean the frames by removing a subspace
@@ -22,7 +22,11 @@ def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', 
     chan_map = data_source.channel_map
     data_source.write_parameters(block_size=block_size, multiresolution=multiresolution, wavelet=wavelet,
                                  wave_levels=wave_levels, **cleaner_kwargs)
-    for block, sl in tqdm(data_source.iter_blocks(block_size, return_slice=True)):
+    L = int(data_source.samp_rate * block_size)
+    P = int(data_source.samp_rate * block_overlap)
+    prev_sl = None
+    prev_clean_block = None
+    for block, sl in tqdm(data_source.iter_blocks(L, overlap=P, return_slice=True)):
         if multiresolution:
             b_coefs = wavedec(block, wavelet, axis=1, level=wave_levels)
             start_coefs = int(skip_lowpass)
@@ -32,7 +36,33 @@ def clean_blocks(data_source, block_size, multiresolution=False, wavelet='db2', 
             clean_block = waverec(clean_coefs, wavelet, axis=1)
         else:
             clean_block = clean_frames_quickest(block, chan_map, **cleaner_kwargs)
+        # write current block
         data_source[sl] = clean_block
+        # if overlapping, stich overlap region with the previous block
+        if P > 0 and prev_sl:
+            stitch_frames(data_source, prev_sl, sl, prev_clean_block, clean_block)
+        prev_sl = sl
+        prev_clean_block = clean_block
+
+
+def stitch_frames(data_source, left_slice, right_slice, left_clean, right_clean):
+    """Linearly interpolate between residual templates for the overlapped duration between slices."""
+    P = left_slice.stop - right_slice.start
+    # compute overlapping slices for the data source and the left/right blocks
+    data_slice = slice(right_slice.start, left_slice.stop)
+    L = left_slice.stop - left_slice.start
+    left_overlap = (slice(None), slice(L - P, L))
+    right_overlap = (slice(None), slice(0, P))
+
+    raw_overlap = data_source[data_slice]
+    left_resid = raw_overlap - left_clean[left_overlap]
+    right_resid = raw_overlap - right_clean[right_overlap]
+
+    # the left-block and right-block residuals will be crossed over linearly from
+    # fully left to fully right
+    right_mix = np.linspace(0, 1, P)
+    data_source[data_slice] = raw_overlap - (1 - right_mix) * left_resid - right_mix * right_resid
+    return
 
 
 # ------- Diagnostics -------
