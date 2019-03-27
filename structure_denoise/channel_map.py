@@ -224,10 +224,12 @@ class ChannelMap(list):
             col_major=self.col_major, pitch=self.pitch
             )
 
-    def __getslice__(self, i, j):
+    def __getitem__(self, index):
+        if not isinstance(index, slice):
+            return super(ChannelMap, self).__getitem__(index)
         cls = type(self)
         new_map = cls(
-            super(ChannelMap, self).__getslice__(i,j),
+            super(ChannelMap, self).__getitem__(index),
             self.geometry, col_major=self.col_major, pitch=self.pitch
             )
         # Keep the pre-computed combinations IFF the entire map is copied
