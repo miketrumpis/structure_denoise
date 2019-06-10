@@ -162,6 +162,8 @@ def diagnostic_mode(parsed_args):
     kwargs.pop('wave_levels')
     # skip-lowpass not used here
     kwargs.pop('skip_lowpass')
+    # block overlap not used here
+    kwargs.pop('block_overlap')
     # wavelet = kwargs.pop('wavelet', None)
     video = not parsed_args.diagnostic_skip_video
     source = get_data_source(parsed_args, saving=False)
