@@ -15,6 +15,8 @@ NonSignalChannels = Enum('NonSignalChannels', ['grounded', 'reference', 'other']
 GND = NonSignalChannels.grounded
 REF = NonSignalChannels.reference
 OTHER = NonSignalChannels.other
+# Turn this into a set to support membership logic ("x in NonSignalChannels")
+NonSignalChannels = set(NonSignalChannels)
 
 
 def map_intersection(maps):
