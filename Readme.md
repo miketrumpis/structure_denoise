@@ -2,6 +2,10 @@
 
 This set of code performs artifact subtraction for the peculiar noise "structure" seen in the 244 channel LCP ECoG array. The algorithm is described in a notebook named "Structure_denoise_notes". There is also an extensive library of methods to visualize and predict the effects of processing parameters, which can be used to tweak processing for a particular recording.
 
+## October 2020 update for posterity
+
+The "structured artifacts" observed were caused by an error in channel mapping. This tool is no longer of use.
+
 ## Installing
 
 This code has been tested for Python 2 and Python 3.
